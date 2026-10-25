@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mps-regime"
+version = "0.0.1"
+description = "Quantum-inspired market regime & tail-complexity module (MPS / tensor-network diagnostics)"
+authors = [{ name = "Kevin Foley" }]
+requires-python = ">=3.11"
+readme = "README.md"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

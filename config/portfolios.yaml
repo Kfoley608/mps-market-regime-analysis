@@ -1,0 +1,115 @@
+# Analysis portfolios for the regime / tail-complexity module — OUR OWN designs.
+#
+# (The sponsor's FabriQ sample portfolios — quantum-computing equities, crypto, energy futures — were
+#  provided only as format examples. These are independent designs.)
+#
+# Design rules (inferred from the sample portfolios' structure):
+#   - INDIVIDUAL named assets (single stocks), NOT broad sector ETFs. A sector ETF is itself a basket
+#     of ~70 names, which washes out the individual-asset dependence the MPS is built to capture.
+#   - 10-50 assets per portfolio (50 is the cap — set by the MPS / qubit size constraint).
+#   - The MPS is fit over each portfolio's asset set; weights are used only for portfolio-level
+#     comparators (drawdown, realized-VaR breaches) — they do NOT change the fitted model.
+#
+# Design intent: each portfolio is built to stress a DIFFERENT dependence/regime phenomenon, so the
+# MPS diagnostics (entanglement entropy, joint-tail probability, NLL) have varied, interpretable
+# signals to detect. `primary` is the equal-weight workhorse; all names are liquid US large-caps.
+#
+# HISTORY CLAIMS ARE AUDITED, NOT ASPIRATIONAL: each `history` line below states the audited
+# first-valid date of the LATEST-listing constituent (the "common-span start" — the first date on
+# which ALL names in the book have prices). Rolling-window analysis over the full book is only
+# valid from that date; individual longer-history names can of course be used further back.
+# (Audit: scripts/audit_panels.py + yfinance first-trade check, 2026-07-06.)
+
+primary_equalweight_diversified:
+  description: Broad cross-sector US large-caps, equal-weight — the workhorse for the main regime analysis.
+  regime_probe: baseline market dependence (the reference all themed books are compared against)
+  data_source: equities (yfinance) — panel data/primary_prices.parquet (2007-01-03 -> 2026-06-23)
+  weighting: equal
+  history: 23 of 24 names from 2007-01-03; META lists 2012-05-18 -> full-24 common span starts
+           2012-05-18 (audited; 3,543 common rows). NOT "2008+" for the whole book.
+  assets: [AAPL, MSFT, NVDA, GOOGL, META, AMZN, JPM, GS, BAC, XOM, CVX, JNJ,
+           UNH, PFE, MRK, PG, KO, WMT, CAT, HON, GE, NEE, LIN, VZ]          # 24 names
+
+megacap_tech_concentration:
+  description: Mega-cap tech + semis + software — a deliberately concentrated, single-factor book.
+  regime_probe: FACTOR CONCENTRATION — when one factor (big tech) drives everything, entanglement and
+                PC1 should spike. Tests whether the MPS flags concentration regimes.
+  data_source: equities (yfinance)
+  weighting: equal
+  history: most names 2007+; latest listings TSLA 2010-06-29, META 2012-05-18, NOW 2012-06-29
+           -> full-16 common span starts 2012-06-29 (audited first-trade dates).
+  assets: [AAPL, MSFT, NVDA, GOOGL, AMZN, META, TSLA, AVGO, AMD, QCOM, MU, TXN, ORCL, CRM, NOW, ADBE]  # 16
+
+semiconductor_tailcluster:
+  description: A single industry in depth — the semiconductor supply chain.
+  regime_probe: INTRA-SECTOR TAIL CLUSTERING — these names crash together, so the joint-tail-probability
+                feature should run high. A stress test/contrast to the diversified book.
+  data_source: equities (yfinance) — panel data/semis_prices.parquet (4,250 rows, zero NaNs, audited)
+  weighting: equal
+  history: full-15 common span 2009-08-06 -> 2026-06-30 (start = AVGO IPO 2009-08-06; all other
+           names listed earlier). NOT "2008+" — AVGO is the binding constraint.
+  assets: [NVDA, AMD, INTC, AVGO, QCOM, TXN, MU, AMAT, LRCX, KLAC, ADI, MCHP, ON, TSM, ASML]   # 15
+
+risk_on_off_longshort:
+  description: Long high-beta cyclicals/growth, short low-beta defensives & a gold-miner safe-haven proxy.
+  regime_probe: RISK-ON / RISK-OFF — the dominant macro regime; cross-leg dependence should FLIP in
+                crises. The cleanest regime-switch target for Tier-2.
+  data_source: equities (yfinance)
+  weighting: long_short
+  history: >-
+    NOT 2008+ — TSLA lists 2010-06-29 and NCLH 2013-01-18 -> full-book common span starts
+    2013-01-18. WARNING (audited 2026-07-06) — X (US Steel) was DELISTED mid-2025 (Nippon
+    Steel acquisition), so the book as defined cannot run past ~2025-06; drop or replace X
+    for current-period analysis.
+  weights: {NVDA: 1.0, TSLA: 1.0, AMZN: 1.0, AMD: 1.0, CAT: 1.0, BA: 1.0, NCLH: 1.0, FCX: 1.0, X: 1.0,
+            PG: -1.0, KO: -1.0, JNJ: -1.0, WMT: -1.0, DUK: -1.0, SO: -1.0, KMB: -1.0, NEM: -1.0, CLX: -1.0}  # 18
+
+rates_barbell_longshort:
+  description: Long rate-sensitive value (regional banks, REITs, utilities, homebuilders) / short long-duration growth.
+  regime_probe: INTEREST-RATE REGIME — isolates the rates-driven dependence shift (e.g. the 2022 hiking
+                shock) that a covariance matrix blurs.
+  data_source: equities (yfinance)
+  weighting: long_short
+  history: mixed — CFG lists 2014-09-24, SHOP 2015-05-20, SNOW 2020-09-16 (audited first-trade
+           dates) -> full-book common span starts only 2020-09-16; a CFG/SHOP/SNOW-free variant
+           would reach back to ~2007.
+  weights: {RF: 1.0, KEY: 1.0, CFG: 1.0, O: 1.0, SPG: 1.0, DUK: 1.0, SO: 1.0, DHI: 1.0, LEN: 1.0,
+            NVDA: -1.0, CRM: -1.0, NOW: -1.0, ADBE: -1.0, SHOP: -1.0, SNOW: -1.0, NFLX: -1.0}   # 16
+
+commodity_producers_equities:
+  description: Commodity-linked equities — gold miners, oil majors/E&P, copper, ags/fertilizer.
+  regime_probe: COMMODITY-DRIVEN DEPENDENCE — a real-asset cluster whose co-movement decouples from the
+                broad equity factor; tests cross-block dependence vs the tech-heavy books.
+  data_source: equities (yfinance)
+  weighting: equal
+  history: >-
+    NOT 2008+ — NTR exists only from 2018-01-02 (Agrium/PotashCorp merger) and CTVA from
+    2019-05-24 (DowDuPont spin-off) -> full-15 common span starts 2019-05-24 (audited).
+    WARNING — the GOLD ticker is deprecated (Barrick moved to ticker "B" in May 2025), so
+    GOLD's yfinance series is broken/short; use B (or drop) for current-period analysis.
+  assets: [NEM, GOLD, AEM, XOM, CVX, COP, EOG, OXY, FCX, SCCO, ADM, NTR, MOS, CTVA, BG]   # 15
+
+futures_macro:
+  description: Macro futures book — 10 liquid CME continuous futures spanning equity index (ES, NQ),
+               rates (ZN, ZB), metals (GC, SI, HG), energy (CL, NG) and ags (ZC), plus BTC/ETH spot.
+               All real instruments (continuous futures + crypto reference rates), zero ETFs.
+  regime_probe: CROSS-ASSET MACRO REGIME — dependence across asset CLASSES (equity / duration /
+                commodity / crypto), where risk-on/off and inflation regimes reorganize the joint
+                distribution; the equity-only books cannot see the rates/commodity legs.
+  data_source: DataBento GLBX.MDP3 continuous futures, ohlcv-1d, OPEN-INTEREST roll (.n.0), raw
+               stitched closes with a roll-day mask (docs/Futures-dataset.md §3, §6) + Coin Metrics
+               PriceUSD daily reference rate for BTC/ETH.
+  weighting: equal
+  panel: data/futures_macro_prices.parquet (+ data/futures_macro_roll.parquet roll mask — roll-day
+         futures returns are contract seams and MUST be masked; builder scripts/build_futures_macro.py)
+  alignment: index = futures (CME) Mon-Fri trading calendar (thin partial-session Sunday UTC bars
+             dropped, roll seams propagated to the next session); crypto weekend/holiday rows
+             dropped (calendar intersection, no forward-fill); BTC/ETH LAGGED +1 day before
+             intersecting because the Coin Metrics close is stamped UTC midnight (contains
+             post-US-settle information).
+  history: audited 2026-07-06 — panel 4,178 x 12, 2010-06-07 -> 2026-07-03. Futures from 2010-06-07
+           (GLBX.MDP3 dataset inception 2010-06-06; earlier history is not obtainable from this
+           source, so the 2010-01-01 target start is unmet by ~5 months). BTC from 2010-07-19, ETH
+           from 2015-08-10 (Coin Metrics inception) -> full-12-column common span 2015-08-10 ->
+           2026-07-02 (2,741 rows). ZC misses ~8 grain-holiday weekdays/yr (longest run 1 day).
+  assets: [ES, NQ, ZN, ZB, GC, SI, HG, CL, NG, ZC, BTC, ETH]   # 12

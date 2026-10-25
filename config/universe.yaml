@@ -1,0 +1,74 @@
+# Asset universe and portfolio definitions.
+# The MPS is fit ONCE over `universe`. Portfolios are weight vectors applied at evaluation
+# time on the same fitted object (and on realized returns) — they do not change the modeling.
+
+universe:
+  # 12 liquid ETFs spanning equity sectors + rates + credit + gold, so dependence-structure
+  # shifts (e.g. the stock/bond correlation flip) are visible while n=12 stays estimable
+  # from ~250-day windows.
+  equity_sectors: [XLF, XLK, XLE, XLV, XLI, XLP, XLY, XLU, XLB]
+  rates:  [TLT]      # long Treasuries
+  credit: [HYG]      # high-yield credit
+  gold:   [GLD]
+  # Candidate risk-free leg to add once the sponsor confirms scope:
+  # risk_free: [BIL]   # 1-3mo T-bills
+
+data:
+  source: yfinance        # pending the sponsor confirmation (may switch to a provided / FabriQ feed)
+  field: adj_close
+  start: "2005-01-01"
+  end: null               # null => through latest
+  frequency: daily
+
+windows:
+  train_days: 250         # rolling fit window
+  step_days: 5            # how often to refit
+  var_confidence: [0.95, 0.975, 0.99]
+
+binning:
+  method: quantile        # quantile | fixed
+  bins_per_asset: 3       # coarse on purpose — tail-state probability is sensitive to this
+  # ordering fixed by a mutual-information heuristic; ordering SENSITIVITY is itself a feature.
+  ordering: mutual_information
+
+# Portfolios = evaluation axis. Weights must reference tickers present in `universe`
+# (risk_free entries are placeholders until that leg is confirmed).
+portfolios:
+  equal_weight:
+    description: Equal weight across the full universe.
+    weights: equal
+
+  sixty_forty:
+    description: Classic 60% equity / 40% bonds (proxied by sector ETFs vs TLT).
+    weights:
+      XLF: 0.0667
+      XLK: 0.0667
+      XLE: 0.0667
+      XLV: 0.0667
+      XLI: 0.0667
+      XLP: 0.0667
+      XLY: 0.0667
+      XLU: 0.0667
+      XLB: 0.0667
+      TLT: 0.40
+
+  all_equity:
+    description: Equity sectors only, equal weight.
+    weights:
+      XLF: 0.1111
+      XLK: 0.1111
+      XLE: 0.1111
+      XLV: 0.1111
+      XLI: 0.1111
+      XLP: 0.1111
+      XLY: 0.1111
+      XLU: 0.1111
+      XLB: 0.1111
+
+  risk_parity:
+    description: Inverse-volatility weights (computed at eval time from the train window).
+    weights: inverse_vol
+
+  # risky_riskfree:
+  #   description: Risky basket blended with a risk-free leg (awaiting the sponsor portfolio list).
+  #   weights: { equal_risky: 0.6, BIL: 0.4 }

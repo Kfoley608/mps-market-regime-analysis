@@ -1,0 +1,28 @@
+# Core
+numpy
+pandas
+scipy
+pyyaml
+matplotlib
+
+# Data
+yfinance
+
+# Tensor networks / MPS Born machine (DMRG-style training)
+quimb
+tensorkrowch          # PyTorch MPS layers; fallback: adapt Han et al. UnsupGenModbyMPS
+torch
+
+# Classical baselines / evaluation
+scikit-learn
+statsmodels
+arch                  # HAC errors, Diebold-Mariano tests
+hmmlearn
+jumpmodels            # statistical jump / regime models for the regime demo
+
+# Path-to-quantum demo
+qiskit
+qiskit-algorithms     # IQAE (amplitude estimation)
+
+# Dev
+pytest

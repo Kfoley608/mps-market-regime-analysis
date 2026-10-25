@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Data / large artifacts
+# Ignore the data folder's CONTENTS, but keep the folder + its README on GitHub so the
+# data is documented even though the files themselves are never committed.
+data/*
+!data/README.md
+*.parquet
+*.h5
+*.hdf5
+*.pkl
+*.npy
+*.npz
+
+# Notebooks output / scratch
+scratch/
+outputs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Backup / duplicate docs
+*- Copy.md
+*.env
+*Key.txt
